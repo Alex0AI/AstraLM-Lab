@@ -1,4 +1,4 @@
-name: Cloud TinyStories Ablation
+name: Cloud Public Text Ablation
 on:
   workflow_dispatch:
     inputs:
@@ -13,9 +13,9 @@ on:
         description: Training steps per run
         default: "40"
         required: true
-      documents:
-        description: Streamed TinyStories documents
-        default: "300"
+      max_bytes:
+        description: Maximum public-corpus bytes to download
+        default: "750000"
         required: true
       seeds:
         description: Comma-separated seeds
@@ -35,18 +35,22 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -e ".[dev,data]"
-      - run: python scripts/prepare_public_data.py tinystories --documents "${{ inputs.documents }}"
+      - run: pip install -e ".[dev]"
+      - run: >-
+          python scripts/prepare_public_data.py tinyshakespeare
+          --max-bytes "${{ inputs.max_bytes }}"
       - run: >-
           astralm ablate --preset "${{ inputs.preset }}"
-          --corpus data/public_sample.txt --output runs/tinystories
+          --corpus data/public_sample.txt --output runs/public-text
           --steps "${{ inputs.steps }}" --batch-size 8 --seq-len 64
           --eval-interval 10 --eval-batches 5 --seeds "${{ inputs.seeds }}"
       - name: Add report to workflow summary
-        run: cat runs/tinystories/report.md >> "$GITHUB_STEP_SUMMARY"
+        run: cat runs/public-text/report.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: astralm-tinystories-ablation-${{ inputs.preset }}
-          path: runs/tinystories/
+          name: astralm-public-text-ablation-${{ inputs.preset }}
+          path: |
+            runs/public-text/
+            data/public_sample.meta.json
           retention-days: 30
           if-no-files-found: error

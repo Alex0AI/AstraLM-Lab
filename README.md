@@ -139,11 +139,12 @@ seeds—not a theorem about larger models.
 | AstraScope | zero install | architecture and memory intuition |
 | `pico` preset | CPU friendly | correctness and training smoke tests |
 | `tiny` preset | modest | local experiments |
-| Cloud workflow | no local Torch/data | streamed TinyStories ablation |
+| Cloud workflow | no local Torch/data | pinned public-text ablation |
 | `small` preset | GPU recommended | scaling experiments |
 
-Use **Actions → Cloud TinyStories Ablation → Run workflow** to stream a bounded
-public-data sample, train on a GitHub runner, and download only the reports.
+Use **Actions → Cloud Public Text Ablation → Run workflow** to download a bounded,
+commit-pinned Tiny Shakespeare sample, train on a GitHub runner, and retrieve only
+the reports. The downloader uses Python's standard library—no native data stack.
 
 ## Learn, reproduce, contribute
 

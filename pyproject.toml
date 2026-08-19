@@ -28,7 +28,6 @@ Issues = "https://github.com/Alex0AI/AstraLM-Lab/issues"
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 viz = ["matplotlib>=3.8"]
-data = ["datasets>=3.0"]
 
 [project.scripts]
 astralm = "astralm.cli:main"

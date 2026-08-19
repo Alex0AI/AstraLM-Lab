@@ -41,7 +41,7 @@ astralm ablate --preset pico --steps 100 --seeds 17,42,73
 ```
 
 如果电脑不适合安装 PyTorch，可以在 GitHub Actions 中运行 **Cloud
-TinyStories Experiment**。公开数据、训练和测试全部发生在云端 Runner，电脑
+Public Text Ablation**。固定版本的公开数据、训练和测试全部发生在云端 Runner，电脑
 只下载最终报告。
 
 ## 项目创新边界

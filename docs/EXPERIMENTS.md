@@ -15,9 +15,10 @@ This creates one directory per mode and seed plus:
 
 ## Public-data cloud experiment
 
-Use **Actions → Cloud TinyStories Experiment → Run workflow**. The workflow
-streams a bounded TinyStories slice on the runner, performs a matched ablation,
-and uploads reports. No dataset or Torch installation is required on your laptop.
+Use **Actions → Cloud Public Text Ablation → Run workflow**. The workflow
+downloads a bounded, commit-pinned Tiny Shakespeare sample on the runner,
+performs a matched ablation, and uploads reports. No dataset or Torch installation
+is required on your laptop.
 
 ## Comparison checklist
 
@@ -28,4 +29,3 @@ and uploads reports. No dataset or Torch installation is required on your laptop
 - [ ] raw metrics retained
 - [ ] hardware and Torch version recorded
 - [ ] conclusion scoped to the observed setting
-

@@ -14,7 +14,7 @@ and reproduce—not by accumulating every feature used by production LLM stacks.
 
 ## Next: stronger evidence
 
-- [ ] Publish a fixed-token-budget TinyStories baseline table
+- [ ] Publish a fixed-token-budget public-corpus baseline table
 - [ ] Add bootstrap confidence intervals and paired seed comparisons
 - [ ] Record throughput, peak memory, environment, and commit SHA in reports
 - [ ] Add a second public corpus to test whether conclusions transfer
