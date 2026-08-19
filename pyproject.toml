@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "astralm-lab"
+version = "0.1.0"
+description = "A compact decoder-only Transformer laboratory with GQA, RoPE, cross-layer attention bridges, and verified KV caching."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "Alex0AI"}]
+dependencies = ["torch>=2.2", "pyyaml>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+viz = ["matplotlib>=3.8"]
+data = ["datasets>=3.0"]
+
+[project.scripts]
+astralm = "astralm.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/astralm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

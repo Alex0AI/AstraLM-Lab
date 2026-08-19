@@ -1,0 +1,35 @@
+name: Cloud TinyStories Experiment
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: Training steps
+        default: "50"
+        required: true
+      documents:
+        description: Streamed TinyStories documents
+        default: "500"
+        required: true
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev,data]"
+      - run: python scripts/prepare_public_data.py tinystories --documents "${{ inputs.documents }}"
+      - run: >-
+          astralm train --corpus data/public_sample.txt --output runs/tinystories
+          --steps "${{ inputs.steps }}" --batch-size 4 --seq-len 64
+      - run: astralm benchmark runs/tinystories/model.pt --tokens 32 > runs/tinystories/benchmark.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: astralm-tinystories-results
+          path: |
+            runs/tinystories/metrics.json
+            runs/tinystories/train_config.json
+            runs/tinystories/benchmark.json
+          retention-days: 14

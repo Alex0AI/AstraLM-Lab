@@ -1,0 +1,4 @@
+Models are maps made from matrices. Small experiments reveal large ideas.
+Measure the cache, inspect the residual stream, and make every claim reproducible.
+The best systems are not mysterious: each component has a contract and a test.
+
