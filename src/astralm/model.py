@@ -61,7 +61,9 @@ class DecoderLM(nn.Module):
             if collect_diagnostics:
                 diagnostics[f"block_{index}.residual_rms"] = float(x.detach().float().pow(2).mean().sqrt())
                 if block.use_bridge:
-                    diagnostics[f"block_{index}.bridge_gate"] = float(block.bridge.gate_logit.sigmoid())
+                    diagnostics[f"block_{index}.bridge_gate"] = float(
+                        block.bridge.gate_logit.detach().sigmoid()
+                    )
         logits = self.output(self.norm(x))
         if self.config.logit_softcap is not None:
             cap = self.config.logit_softcap

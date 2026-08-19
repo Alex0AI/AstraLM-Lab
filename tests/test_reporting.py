@@ -5,10 +5,10 @@ from astralm.reporting import paired_comparison, summarize_runs, write_report
 
 def test_report_contains_matched_modes(tmp_path) -> None:
     runs = [
-        {"mode": "standard", "best_val_loss": 2.0, "parameter_count": 100, "duration_seconds": 1.0},
-        {"mode": "standard", "best_val_loss": 2.2, "parameter_count": 100, "duration_seconds": 1.2},
-        {"mode": "attention_bridge", "best_val_loss": 1.9, "parameter_count": 100, "duration_seconds": 1.1},
-        {"mode": "attention_bridge", "best_val_loss": 2.1, "parameter_count": 100, "duration_seconds": 1.3},
+        {"mode": "standard", "seed": 1, "best_val_loss": 2.0, "parameter_count": 100, "duration_seconds": 1.0},
+        {"mode": "standard", "seed": 2, "best_val_loss": 2.2, "parameter_count": 100, "duration_seconds": 1.2},
+        {"mode": "attention_bridge", "seed": 1, "best_val_loss": 1.9, "parameter_count": 100, "duration_seconds": 1.1},
+        {"mode": "attention_bridge", "seed": 2, "best_val_loss": 2.1, "parameter_count": 100, "duration_seconds": 1.3},
     ]
     comparison = paired_comparison(runs)
     payload = {
