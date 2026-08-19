@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
+import platform
+import sys
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Iterable
 
 from .config import ModelConfig
-from .reporting import summarize_runs, write_report
+import torch
+
+from .reporting import paired_comparison, summarize_runs, write_report
 from .training import TrainConfig, train_run
 
 
@@ -33,13 +38,21 @@ def run_ablation(
     if len(parameter_counts) != 1:
         raise AssertionError("ablation parameter counts must match")
     payload = {
-        "schema": "astralm-ablation-v1",
+        "schema": "astralm-ablation-v2",
         "corpus": str(corpus),
         "seeds": seed_list,
         "model_config": model_config.to_dict(),
         "train_config": asdict(train_config),
         "runs": runs,
         "summary": summarize_runs(runs),
+        "paired_comparison": paired_comparison(runs),
+        "environment": {
+            "python": sys.version.split()[0],
+            "torch": torch.__version__,
+            "platform": platform.platform(),
+            "device": device or "auto",
+            "commit_sha": os.environ.get("GITHUB_SHA"),
+        },
     }
     write_report(payload, output_path)
     (output_path / "manifest.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")

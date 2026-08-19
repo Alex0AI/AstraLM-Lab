@@ -9,6 +9,7 @@ for its Python package and report schema.
 
 - Equal-parameter, multi-seed Attention Bridge ablation runner
 - JSON, Markdown, and standalone HTML experiment reports
+- Paired-seed deltas, win counts, runtime provenance, and an honest results ledger
 - Warmup/cosine training, validation, atomic checkpoints, and resume
 - Deterministic dependency-free byte-level BPE
 - Static parameter and KV-cache estimator

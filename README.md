@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/github/license/Alex0AI/AstraLM-Lab)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Alex0AI/AstraLM-Lab?style=social)](https://github.com/Alex0AI/AstraLM-Lab/stargazers)
 
-[Live AstraScope](https://alex0ai.github.io/AstraLM-Lab/) · [Open in Colab](https://colab.research.google.com/github/Alex0AI/AstraLM-Lab/blob/main/notebooks/quickstart.ipynb) · [Quick start](#three-minute-tour) · [Experiments](docs/EXPERIMENTS.md) · [中文](README.zh-CN.md)
+[Live AstraScope](https://alex0ai.github.io/AstraLM-Lab/) · [Open in Colab](https://colab.research.google.com/github/Alex0AI/AstraLM-Lab/blob/main/notebooks/quickstart.ipynb) · [First result](docs/RESULTS.md) · [Experiments](docs/EXPERIMENTS.md) · [中文](README.zh-CN.md)
 
 </div>
 
