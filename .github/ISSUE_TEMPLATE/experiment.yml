@@ -1,0 +1,35 @@
+name: Experiment result
+description: Share a positive, negative, or inconclusive reproducible result.
+title: "[Experiment]: "
+labels: [experiment]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question and result
+      description: State the hypothesis first, then the outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: protocol
+    attributes:
+      label: Protocol
+      description: Data, config, seeds, token budget, hardware, and commit SHA.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Artifacts
+      description: Link report.json, metrics JSONL, logs, and checkpoints where possible.
+    validations:
+      required: true
+  - type: checkboxes
+    id: guardrail
+    attributes:
+      label: Reproducibility check
+      options:
+        - label: The comparison uses matched parameters and token budgets.
+          required: true
+        - label: I will report this result even if it is negative or inconclusive.
+          required: true

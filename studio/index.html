@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore Transformer parameter counts, grouped-query KV-cache memory, and AstraLM's matched Attention Bridge design in your browser.">
+  <meta name="theme-color" content="#06111f">
+  <title>AstraScope · Transformer budget explorer</title>
+  <style>
+    :root { color-scheme: dark; --bg:#06111f; --panel:#0b1d31; --line:#1e3a5f; --cyan:#5ee8ff; --violet:#a78bfa; --amber:#fbbf72; --muted:#91a6bf; }
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100vh; font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif; background:radial-gradient(circle at 70% 0,#102a4d 0,transparent 34%),var(--bg); color:#e8f3ff }
+    header { max-width:1240px; margin:auto; padding:44px 28px 26px; display:flex; justify-content:space-between; gap:24px; align-items:end }
+    h1 { margin:0; font-size:clamp(34px,6vw,70px); letter-spacing:-.06em; line-height:.95 }
+    h1 span { color:var(--cyan) }
+    header p { max-width:560px; color:var(--muted); margin:14px 0 0 }
+    .badge { border:1px solid #2b527b; border-radius:999px; padding:8px 13px; color:var(--cyan); white-space:nowrap; text-decoration:none }
+    .badge:hover { border-color:var(--cyan); background:#0d2b44 }
+    main { max-width:1240px; margin:auto; padding:0 28px 56px; display:grid; grid-template-columns:340px 1fr; gap:22px }
+    .panel { background:linear-gradient(145deg,rgba(15,40,66,.96),rgba(8,26,45,.96)); border:1px solid var(--line); border-radius:20px; box-shadow:0 22px 70px #0007 }
+    aside { padding:22px; align-self:start; position:sticky; top:18px }
+    .control { margin:0 0 18px }
+    .control label { display:flex; justify-content:space-between; color:#c6d9ee; margin-bottom:7px }
+    .control output { color:var(--cyan); font-variant-numeric:tabular-nums }
+    input[type=range] { width:100%; accent-color:#46d7ef }
+    select { width:100%; padding:9px 10px; color:#e8f3ff; background:#071728; border:1px solid #294663; border-radius:9px }
+    .content { display:grid; gap:22px }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px }
+    .stat { padding:18px; min-height:118px }
+    .stat small { display:block; color:var(--muted); text-transform:uppercase; letter-spacing:.08em }
+    .stat strong { display:block; margin-top:16px; color:var(--cyan); font-size:clamp(21px,3vw,31px); font-variant-numeric:tabular-nums }
+    .stat em { display:block; color:#8298b0; font-style:normal; font-size:12px }
+    .architecture { padding:25px; overflow:hidden; min-height:500px }
+    .architecture h2,.notes h2 { margin:0 0 7px; font-size:20px }
+    .architecture>p,.notes>p { color:var(--muted); margin:0 0 20px }
+    #stack { display:flex; flex-direction:column-reverse; gap:8px; position:relative; max-width:660px; margin:0 auto; padding:18px 74px }
+    .block { min-height:48px; border:1px solid #26658b; border-radius:12px; background:linear-gradient(90deg,#0f4360,#192d5a); display:grid; grid-template-columns:1fr 1fr; align-items:center; padding:0 16px; box-shadow:inset 0 0 20px #1bdaf315; animation:rise .35s both }
+    .block span:last-child { color:var(--violet); text-align:right }
+    .rail { position:absolute; right:30px; top:35px; bottom:35px; width:28px; border:2px solid var(--violet); border-left:0; border-radius:0 20px 20px 0; opacity:.9 }
+    .rail.off { opacity:.12; border-style:dashed }
+    .io { margin:7px auto; max-width:500px; padding:10px; border:1px dashed #47708f; border-radius:10px; text-align:center; color:var(--amber) }
+    .notes { padding:24px; display:grid; grid-template-columns:1fr 1fr; gap:20px }
+    .formula { padding:15px; border-radius:12px; background:#061524; color:#a9c0d9; font-family:ui-monospace,monospace; overflow:auto }
+    footer { text-align:center; color:#71869d; padding:0 20px 40px }
+    @keyframes rise { from { opacity:0; transform:translateY(8px) } }
+    @media(max-width:900px) { main{grid-template-columns:1fr} aside{position:static}.stats{grid-template-columns:1fr 1fr}.notes{grid-template-columns:1fr} header{align-items:start;flex-direction:column} }
+    @media(max-width:520px) { .stats{grid-template-columns:1fr} #stack{padding:16px 48px 16px 4px} main,header{padding-left:16px;padding-right:16px} }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>Astra<span>Scope</span></h1><p>Explore how model width, grouped-query attention, context, and residual design change parameter and KV-cache budgets—without installing anything.</p></div>
+    <a class="badge" href="https://github.com/Alex0AI/AstraLM-Lab">View source on GitHub ↗</a>
+  </header>
+  <main>
+    <aside class="panel">
+      <div class="control"><label>Layers <output id="layersOut"></output></label><input id="layers" type="range" min="1" max="24" value="6"></div>
+      <div class="control"><label>Model width <output id="dimOut"></output></label><input id="dim" type="range" min="64" max="1024" step="64" value="192"></div>
+      <div class="control"><label>Query heads <output id="headsOut"></output></label><input id="heads" type="range" min="1" max="16" value="6"></div>
+      <div class="control"><label>KV heads <output id="kvOut"></output></label><input id="kv" type="range" min="1" max="16" value="2"></div>
+      <div class="control"><label>FFN width <output id="ffnOut"></output></label><input id="ffn" type="range" min="128" max="4096" step="64" value="512"></div>
+      <div class="control"><label>Context length <output id="seqOut"></output></label><input id="seq" type="range" min="64" max="8192" step="64" value="256"></div>
+      <div class="control"><label>Batch size <output id="batchOut"></output></label><input id="batch" type="range" min="1" max="32" value="1"></div>
+      <div class="control"><label for="dtype">KV precision</label><select id="dtype"><option value="2">bf16 / fp16</option><option value="1">int8</option><option value="4">fp32</option></select></div>
+      <div class="control"><label for="residual">Residual mode</label><select id="residual"><option value="bridge">Attention Bridge</option><option value="standard">Standard</option></select></div>
+    </aside>
+    <section class="content">
+      <div class="stats">
+        <article class="panel stat"><small>Parameters</small><strong id="params"></strong><em>unique trainable values</em></article>
+        <article class="panel stat"><small>Weight memory</small><strong id="weights"></strong><em>at selected precision</em></article>
+        <article class="panel stat"><small>KV cache</small><strong id="cache"></strong><em>batch × context</em></article>
+        <article class="panel stat"><small>GQA reduction</small><strong id="reduction"></strong><em>versus full MHA cache</em></article>
+      </div>
+      <article class="panel architecture">
+        <h2>Decoder computation graph</h2><p>The violet rail represents the learned, RMS-balanced cross-layer attention path.</p>
+        <div class="io">token bytes → embedding</div><div id="stack"></div><div class="io">RMSNorm → tied language-model head</div>
+      </article>
+      <article class="panel notes">
+        <div><h2>Why GQA matters</h2><p>Queries keep their full head count while keys and values use fewer heads. The ratio shown above is the theoretical KV-cache reduction at equal width and context.</p></div>
+        <div><h2>Matched ablations</h2><p>AstraLM allocates bridge gate parameters in both residual modes. Switching the bridge off therefore keeps parameter count exactly equal.</p></div>
+        <div class="formula">KV bytes = 2 × batch × layers × KV heads × context × head dim × dtype bytes</div>
+        <div class="formula">Bridge = √(1 − σ(g)²) · current + σ(g) · RMSMatch(previous)</div>
+      </article>
+    </section>
+  </main>
+  <footer>Zero dependencies · live estimates · companion to <a href="https://github.com/Alex0AI/AstraLM-Lab" style="color:#5ee8ff">AstraLM Lab</a>. Estimates match <code>astralm estimate</code>.</footer>
+  <script>
+    const ids=['layers','dim','heads','kv','ffn','seq','batch','dtype','residual']; const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
+    const fmt=n=>n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+    const bytes=n=>{for(const u of ['B','KiB','MiB','GiB']){if(n<1024)return n.toFixed(2)+' '+u;n/=1024}return n.toFixed(2)+' TiB'};
+    function validHeads(){let d=+el.dim.value,h=+el.heads.value; while(d%h)h--; el.heads.value=Math.max(1,h); let kv=Math.min(+el.kv.value,h); while(h%kv)kv--; el.kv.value=Math.max(1,kv)}
+    function render(){validHeads(); const l=+el.layers.value,d=+el.dim.value,h=+el.heads.value,k=+el.kv.value,f=+el.ffn.value,s=+el.seq.value,b=+el.batch.value,z=+el.dtype.value,hd=d/h;
+      const embed=256*d,att=l*(d*h*hd+2*d*k*hd+d*d),mlp=l*3*d*f,norm=l*2*d+d,bridge=l,p=embed+att+mlp+norm+bridge,cache=2*b*l*k*s*hd*z;
+      for(const [id,v] of [['layersOut',l],['dimOut',d],['headsOut',h],['kvOut',k],['ffnOut',f],['seqOut',s.toLocaleString()],['batchOut',b]])document.getElementById(id).textContent=v;
+      document.getElementById('params').textContent=fmt(p);document.getElementById('weights').textContent=bytes(p*z);document.getElementById('cache').textContent=bytes(cache);document.getElementById('reduction').textContent=(h/k).toFixed(1)+'×';
+      const shown=Math.min(l,12),stack=document.getElementById('stack');stack.innerHTML=Array.from({length:shown},(_,i)=>`<div class="block" style="animation-delay:${i*.025}s"><span>GQA · ${h}Q/${k}KV</span><span>SwiGLU · ${f}</span></div>`).join('')+(l>12?`<div class="io">+ ${l-12} additional layers</div>`:'')+`<div class="rail ${el.residual.value==='standard'?'off':''}"></div>`;
+    }
+    ids.forEach(id=>el[id].addEventListener('input',render));render();
+  </script>
+</body>
+</html>

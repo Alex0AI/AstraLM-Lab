@@ -1,18 +1,34 @@
-name: Cloud TinyStories Experiment
+name: Cloud TinyStories Ablation
 on:
   workflow_dispatch:
     inputs:
+      preset:
+        description: Model preset
+        type: choice
+        options:
+          - pico
+          - tiny
+        default: pico
       steps:
-        description: Training steps
-        default: "50"
+        description: Training steps per run
+        default: "40"
         required: true
       documents:
         description: Streamed TinyStories documents
-        default: "500"
+        default: "300"
         required: true
+      seeds:
+        description: Comma-separated seeds
+        default: "17,42,73"
+        required: true
+
+permissions:
+  contents: read
+
 jobs:
   experiment:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,14 +38,15 @@ jobs:
       - run: pip install -e ".[dev,data]"
       - run: python scripts/prepare_public_data.py tinystories --documents "${{ inputs.documents }}"
       - run: >-
-          astralm train --corpus data/public_sample.txt --output runs/tinystories
-          --steps "${{ inputs.steps }}" --batch-size 4 --seq-len 64
-      - run: astralm benchmark runs/tinystories/model.pt --tokens 32 > runs/tinystories/benchmark.json
+          astralm ablate --preset "${{ inputs.preset }}"
+          --corpus data/public_sample.txt --output runs/tinystories
+          --steps "${{ inputs.steps }}" --batch-size 8 --seq-len 64
+          --eval-interval 10 --eval-batches 5 --seeds "${{ inputs.seeds }}"
+      - name: Add report to workflow summary
+        run: cat runs/tinystories/report.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: astralm-tinystories-results
-          path: |
-            runs/tinystories/metrics.json
-            runs/tinystories/train_config.json
-            runs/tinystories/benchmark.json
-          retention-days: 14
+          name: astralm-tinystories-ablation-${{ inputs.preset }}
+          path: runs/tinystories/
+          retention-days: 30
+          if-no-files-found: error

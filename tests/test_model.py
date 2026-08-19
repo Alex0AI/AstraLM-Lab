@@ -59,3 +59,22 @@ def test_attention_bridge_is_observable() -> None:
     assert output.diagnostics is not None
     assert "block_1.bridge_gate" in output.diagnostics
 
+
+def test_standard_and_bridge_have_equal_parameter_count() -> None:
+    standard = DecoderLM(tiny_config("standard"))
+    bridge = DecoderLM(tiny_config("attention_bridge"))
+    assert standard.parameter_count == bridge.parameter_count
+
+
+def test_model_cache_error_helper() -> None:
+    torch.manual_seed(11)
+    model = DecoderLM(tiny_config()).eval()
+    tokens = torch.randint(0, model.config.vocab_size, (1, 7))
+    assert model.cache_error(tokens) < 2e-5
+
+
+def test_standard_diagnostics_hide_inactive_bridge() -> None:
+    model = DecoderLM(tiny_config("standard"))
+    output = model(torch.randint(0, 64, (1, 5)), collect_diagnostics=True)
+    assert output.diagnostics is not None
+    assert not any(key.endswith("bridge_gate") for key in output.diagnostics)

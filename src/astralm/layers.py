@@ -65,6 +65,8 @@ class GroupedQueryAttention(nn.Module):
         self.v_proj = nn.Linear(config.dim, config.n_kv_heads * self.head_dim, bias=False)
         self.out_proj = nn.Linear(config.dim, config.dim, bias=False)
         self.dropout = config.dropout
+        self.qk_norm = config.qk_norm
+        self.qk_norm_eps = config.norm_eps
         self.rope = RotaryEmbedding(self.head_dim, config.max_seq_len, config.rope_base)
 
     def forward(self, x: torch.Tensor, cache: KVCache | None = None) -> torch.Tensor:
@@ -75,6 +77,13 @@ class GroupedQueryAttention(nn.Module):
         q = self.q_proj(x).view(batch, length, self.n_heads, self.head_dim).transpose(1, 2)
         k = self.k_proj(x).view(batch, length, self.n_kv_heads, self.head_dim).transpose(1, 2)
         v = self.v_proj(x).view(batch, length, self.n_kv_heads, self.head_dim).transpose(1, 2)
+        if self.qk_norm:
+            q = q * torch.rsqrt(
+                q.float().pow(2).mean(-1, keepdim=True) + self.qk_norm_eps
+            ).type_as(q)
+            k = k * torch.rsqrt(
+                k.float().pow(2).mean(-1, keepdim=True) + self.qk_norm_eps
+            ).type_as(k)
         q, k = self.rope(q, k, offset)
         if cache is not None:
             cached = cache.append(self.layer_id, k, v)
@@ -118,17 +127,20 @@ class AttentionBridge(nn.Module):
 class DecoderBlock(nn.Module):
     def __init__(self, config: ModelConfig, layer_id: int) -> None:
         super().__init__()
-        self.attn_norm = RMSNorm(config.dim)
-        self.ffn_norm = RMSNorm(config.dim)
+        self.attn_norm = RMSNorm(config.dim, config.norm_eps)
+        self.ffn_norm = RMSNorm(config.dim, config.norm_eps)
         self.attn = GroupedQueryAttention(config, layer_id)
         self.ffn = SwiGLU(config)
-        self.bridge = AttentionBridge(config.bridge_init) if config.residual_mode == "attention_bridge" else None
+        # The scalar exists in both modes so an ablation has exactly equal
+        # parameter count. Standard mode simply bypasses its computation.
+        self.bridge = AttentionBridge(config.bridge_init)
+        self.use_bridge = config.residual_mode == "attention_bridge"
 
     def forward(
         self, x: torch.Tensor, previous_attention: torch.Tensor | None, cache: KVCache | None
     ) -> tuple[torch.Tensor, torch.Tensor]:
         attention = self.attn(self.attn_norm(x), cache)
-        if self.bridge is not None:
+        if self.use_bridge:
             attention = self.bridge(attention, previous_attention)
         x = x + attention
         x = x + self.ffn(self.ffn_norm(x))
