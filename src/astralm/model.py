@@ -24,7 +24,7 @@ class DecoderLM(nn.Module):
         self.config = config
         self.embedding = nn.Embedding(config.vocab_size, config.dim)
         self.blocks = nn.ModuleList(DecoderBlock(config, index) for index in range(config.n_layers))
-        self.norm = RMSNorm(config.dim)
+        self.norm = RMSNorm(config.dim, config.norm_eps)
         self.output = nn.Linear(config.dim, config.vocab_size, bias=False)
         if config.tie_embeddings:
             self.output.weight = self.embedding.weight
@@ -32,7 +32,17 @@ class DecoderLM(nn.Module):
 
     def _init_weights(self, module: nn.Module) -> None:
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            nn.init.normal_(module.weight, mean=0.0, std=self.config.init_std)
+
+    @property
+    def parameter_count(self) -> int:
+        """Count unique parameters (tied embeddings are counted once)."""
+        return sum(parameter.numel() for parameter in self.parameters())
+
+    def kv_cache_bytes(self, batch_size: int, sequence_length: int, bytes_per_element: int = 2) -> int:
+        head_dim = self.config.dim // self.config.n_heads
+        elements = 2 * batch_size * self.config.n_layers * self.config.n_kv_heads * sequence_length * head_dim
+        return elements * bytes_per_element
 
     def forward(
         self,
@@ -50,9 +60,14 @@ class DecoderLM(nn.Module):
             x, previous_attention = block(x, previous_attention, cache)
             if collect_diagnostics:
                 diagnostics[f"block_{index}.residual_rms"] = float(x.detach().float().pow(2).mean().sqrt())
-                if block.bridge is not None:
-                    diagnostics[f"block_{index}.bridge_gate"] = float(block.bridge.gate_logit.sigmoid())
+                if block.use_bridge:
+                    diagnostics[f"block_{index}.bridge_gate"] = float(
+                        block.bridge.gate_logit.detach().sigmoid()
+                    )
         logits = self.output(self.norm(x))
+        if self.config.logit_softcap is not None:
+            cap = self.config.logit_softcap
+            logits = cap * torch.tanh(logits / cap)
         loss = None
         if targets is not None:
             loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
@@ -87,3 +102,12 @@ class DecoderLM(nn.Module):
             logits = self(context, cache=cache).logits[:, -1]
         return generated
 
+    @torch.inference_mode()
+    def cache_error(self, tokens: torch.Tensor) -> float:
+        """Return max absolute logit error between full and token-wise decode."""
+        self.eval()
+        expected = self(tokens).logits
+        cache = KVCache(self.config.n_layers)
+        pieces = [self(tokens[:, index : index + 1], cache=cache).logits for index in range(tokens.size(1))]
+        actual = torch.cat(pieces, dim=1)
+        return float((expected - actual).abs().max())

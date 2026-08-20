@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: AstraLM Lab
+message: If AstraLM helps your teaching or experiments, please cite this repository.
+type: software
+authors:
+  - given-names: Alex0AI
+repository-code: https://github.com/Alex0AI/AstraLM-Lab
+url: https://github.com/Alex0AI/AstraLM-Lab
+license: MIT
+version: 0.2.0
+date-released: 2026-08-20
+

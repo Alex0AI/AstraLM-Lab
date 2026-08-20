@@ -4,18 +4,30 @@ build-backend = "hatchling.build"
 
 [project]
 name = "astralm-lab"
-version = "0.1.0"
-description = "A compact decoder-only Transformer laboratory with GQA, RoPE, cross-layer attention bridges, and verified KV caching."
+version = "0.2.0"
+description = "A verifiable decoder-only Transformer lab with matched ablations, KV-cache proofs, and interactive architecture exploration."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "Alex0AI"}]
+keywords = ["transformer", "llm", "pytorch", "kv-cache", "education", "research"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = ["torch>=2.2", "pyyaml>=6.0"]
+
+[project.urls]
+Homepage = "https://github.com/Alex0AI/AstraLM-Lab"
+Repository = "https://github.com/Alex0AI/AstraLM-Lab"
+Issues = "https://github.com/Alex0AI/AstraLM-Lab/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 viz = ["matplotlib>=3.8"]
-data = ["datasets>=3.0"]
 
 [project.scripts]
 astralm = "astralm.cli:main"
