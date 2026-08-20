@@ -5,8 +5,8 @@ standard. It is deliberately separate from the project pitch.
 
 ## Pico public-text smoke run — inconclusive
 
-Run: [GitHub Actions 32290940854](https://github.com/Alex0AI/AstraLM-Lab/actions/runs/32290940854)  
-Commit: `9d62a6c8d6105246ff51c5fa9780b5cc0d53cc15`  
+Run: [GitHub Actions 32325213927](https://github.com/Alex0AI/AstraLM-Lab/actions/runs/32325213927)  
+Commit: `0967d6a41ab9ee405c4f9ceb13161d71f3b77c0e`  
 Corpus: 750,000 bytes of Tiny Shakespeare pinned to `karpathy/char-rnn@6f9487a`  
 Corpus SHA-256: `ebeb1464910873540a8608640cb2cbfcc638d18e543a781dfda78c378424a25a`
 
@@ -31,3 +31,4 @@ A result should move from smoke evidence to a headline table only after a fixed
 token budget, more seeds, paired uncertainty, recorded environment, and at least
 one second corpus. A larger run should replace uncertainty with evidence—not
 replace honest wording with stronger marketing.
+
